@@ -1,4 +1,4 @@
-
+import joblib
 import json
 from pathlib import Path
 
@@ -149,3 +149,74 @@ st.caption(
     "Research prototype: risk scores are relative model outputs, "
     "not calibrated probabilities of an actual flood."
 )
+
+
+st.divider()
+st.header("🤖 Live ML Risk Prediction")
+
+MODEL_PATH = (
+    Path(__file__).parent
+    / "ml_service"
+    / "model"
+    / "glof_risk_model.joblib"
+)
+
+try:
+    if not MODEL_PATH.exists():
+        st.warning(
+            "Model file not found. Expected location: "
+            "ml_service/model/glof_risk_model.joblib"
+        )
+    else:
+        bundle = joblib.load(MODEL_PATH)
+        model = bundle["model"]
+        features = bundle["features"]
+
+        st.success("Trained ML model loaded successfully.")
+
+        missing_features = [
+            feature for feature in features
+            if feature not in lakes.columns
+        ]
+
+        if missing_features:
+            st.warning(
+                "The lake CSV does not contain all model inputs. "
+                "Predictions are disabled until the required features "
+                "are available."
+            )
+            st.write("Missing features:", missing_features)
+        else:
+            lake_options = lakes.index.tolist()
+
+            selected_index = st.selectbox(
+                "Choose a lake for prediction",
+                lake_options,
+                format_func=lambda i: str(
+                    lakes.loc[i].get("name", f"Lake {i}")
+                )
+            )
+
+            if st.button("Predict Lake Risk"):
+                row = lakes.loc[[selected_index], features].copy()
+
+                try:
+                    score = float(model.predict_proba(row)[0][1])
+
+                    st.metric("Relative Model Risk Score", f"{score:.1%}")
+
+                    st.caption(
+                        "This is a relative model score, not a calibrated "
+                        "probability of a GLOF event."
+                    )
+
+                except Exception as e:
+                    st.error(f"Prediction failed: {e}")
+
+except Exception as e:
+    st.error(f"Could not load the ML model: {e}")
+    st.info(
+        "Check that the model's scikit-learn version is compatible "
+        "with the version installed by the app."
+    )
+
