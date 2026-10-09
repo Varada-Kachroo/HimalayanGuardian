@@ -5,15 +5,19 @@ import joblib
 app = FastAPI(title="Himalayan Guardian ML Service")
 
 MODEL_PATH = Path(__file__).parent / "model" / "glof_risk_model.joblib"
+bundle = None
 model = None
+features = []
 
 
 @app.on_event("startup")
 def load_model():
-    global model
+    global bundle, model, features
 
     if MODEL_PATH.exists():
-        model = joblib.load(MODEL_PATH)
+        bundle = joblib.load(MODEL_PATH)
+        model = bundle["model"]
+        features = bundle["features"]
 
 
 @app.get("/")
@@ -27,25 +31,40 @@ def home():
 @app.get("/model-info")
 def model_info():
     if model is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Model not loaded. Check the model file path."
-        )
-
-    features = getattr(model, "feature_names_in_", None)
-    feature_count = getattr(model, "n_features_in_", None)
+        raise HTTPException(status_code=503, detail="Model not loaded")
 
     return {
-        "model_type": type(model).__name__,
-        "expected_features": (
-            list(features) if features is not None else None
-        ),
-        "number_of_features": (
-            int(feature_count) if feature_count is not None else None
-        ),
-        "classes": (
-            model.classes_.tolist()
-            if hasattr(model, "classes_")
-            else None
-        )
+        "model_name": bundle.get("model_name"),
+        "expected_features": features,
+        "metrics": bundle.get("metrics"),
+        "trained_on": bundle.get("trained_on")
     }
+
+
+@app.post("/predict")
+def predict(data: dict):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    missing = [f for f in features if f not in data]
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail={"missing_features": missing}
+        )
+
+    try:
+        import pandas as pd
+
+        row = pd.DataFrame(
+            [[data[f] for f in features]],
+            columns=features
+        )
+        score = float(model.predict_proba(row)[0][1])
+
+        return {
+            "risk_score": round(score, 4),
+            "risk_type": "relative model score, not calibrated flood probability"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
