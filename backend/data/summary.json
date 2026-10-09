@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-10-09T07:23:49.847255+00:00",
+  "demo": false,
+  "model": {
+    "name": "random_forest",
+    "cv": {
+      "cv_roc_auc": 0.906,
+      "cv_pr_auc": 0.732,
+      "cv_recall": 0.69,
+      "cv_precision": 0.667
+    },
+    "all_models": {
+      "random_forest": {
+        "cv_roc_auc": 0.906,
+        "cv_pr_auc": 0.732,
+        "cv_recall": 0.69,
+        "cv_precision": 0.667
+      },
+      "xgboost": {
+        "cv_roc_auc": 0.887,
+        "cv_pr_auc": 0.696,
+        "cv_recall": 0.697,
+        "cv_precision": 0.593
+      },
+      "automl_flaml": {
+        "cv_roc_auc": 0.923
+      }
+    },
+    "features": [
+      "log_area_km2",
+      "altitude",
+      "dist_glacier_km",
+      "glacier_area_km2",
+      "glacier_area_5km_km2",
+      "type_e_c_",
+      "type_e_o_",
+      "type_i_s_",
+      "type_m_e_",
+      "type_m_l_",
+      "type_m_o_",
+      "type_o",
+      "slope_mean",
+      "slope_max"
+    ],
+    "n_pos": 142,
+    "n_neg": 426
+  },
+  "case_study": {
+    "lake_id": "HKH-08027",
+    "model_prob": 0.928,
+    "percentile_in_tista_basin": 98.3,
+    "area_km2_in_2005_inventory": 0.977
+  },
+  "notes": [
+    "Risk scores are relative model outputs (training uses sampled negatives), not calibrated flood probabilities.",
+    "Lake attributes come from the ~2005 ICIMOD inventory; lake growth comes from Part 2 when provided."
+  ]
+}
