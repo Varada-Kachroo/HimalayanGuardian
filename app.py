@@ -107,8 +107,43 @@ if not villages.empty:
 else:
     st.info("No village data available.")
 
-st.header("Model Information")
-st.json(summary.get("model", {}))
+
+st.header("Model Performance")
+
+model_info = summary.get("model", {})
+cv = model_info.get("cv", {})
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Selected Model", model_info.get("name", "N/A").replace("_", " ").title())
+c2.metric("ROC-AUC", f"{cv.get('cv_roc_auc', 0):.3f}")
+c3.metric("Precision", f"{cv.get('cv_precision', 0):.3f}")
+
+st.subheader("Model Comparison")
+
+all_models = model_info.get("all_models", {})
+if all_models:
+    comparison = pd.DataFrame(all_models).T
+    comparison.index.name = "Model"
+    comparison = comparison.reset_index()
+    comparison["Model"] = comparison["Model"].str.replace("_", " ").str.title()
+
+    if "cv_roc_auc" in comparison.columns:
+        fig = px.bar(
+            comparison,
+            x="Model",
+            y="cv_roc_auc",
+            title="ROC-AUC Comparison",
+            range_y=[0, 1],
+            text_auto=".3f"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.dataframe(comparison, use_container_width=True)
+
+st.caption(
+    "Evaluation metrics are based on spatial cross-validation. "
+    "They do not represent calibrated probabilities of an actual flood."
+)
 
 st.caption(
     "Research prototype: risk scores are relative model outputs, "
