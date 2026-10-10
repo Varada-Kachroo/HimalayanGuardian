@@ -191,8 +191,8 @@ try:
             )
             st.write("Missing features:", missing_features)
         else:
-                       lookup = lakes.set_index("lake_id")[["name", "basin"]] if "lake_id" in lakes.columns else pd.DataFrame()
-
+            lookup = lakes.set_index("lake_id")[["name", "basin"]] if "lake_id" in lakes.columns else pd.DataFrame()
+       
             def lake_label(i):
                 lid = features_df.loc[i].get("lake_id", f"Lake {i}")
                 if lid in lookup.index:
