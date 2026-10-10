@@ -172,7 +172,7 @@ try:
         model = bundle["model"]
         features = bundle["features"]
 
-              st.success("Trained ML model loaded successfully.")
+        st.success("Trained ML model loaded successfully.")
 
         missing_features = [
             feature for feature in features
