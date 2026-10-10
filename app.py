@@ -27,7 +27,7 @@ def load_csv(filename):
 lakes = load_csv("lake_risk.csv")
 villages = load_csv("villages.csv")
 forecast = load_csv("forecast.csv")
-
+features_df = load_csv("feature_table.csv")
 summary_path = DATA / "summary.json"
 summary = {}
 if summary_path.exists():
@@ -172,11 +172,11 @@ try:
         model = bundle["model"]
         features = bundle["features"]
 
-        st.success("Trained ML model loaded successfully.")
+              st.success("Trained ML model loaded successfully.")
 
         missing_features = [
             feature for feature in features
-            if feature not in lakes.columns
+            if feature not in features_df.columns
         ]
 
         if missing_features:
@@ -187,18 +187,18 @@ try:
             )
             st.write("Missing features:", missing_features)
         else:
-            lake_options = lakes.index.tolist()
+            lake_options = features_df.index.tolist()
 
             selected_index = st.selectbox(
                 "Choose a lake for prediction",
                 lake_options,
                 format_func=lambda i: str(
-                    lakes.loc[i].get("name", f"Lake {i}")
+                    features_df.loc[i].get("lake_id", f"Lake {i}")
                 )
             )
 
             if st.button("Predict Lake Risk"):
-                row = lakes.loc[[selected_index], features].copy()
+                row = features_df.loc[[selected_index], features].copy()
 
                 try:
                     score = float(model.predict_proba(row)[0][1])
