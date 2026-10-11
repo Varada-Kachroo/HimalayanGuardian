@@ -1,3 +1,4 @@
+
 import joblib
 import json
 from pathlib import Path
@@ -191,13 +192,20 @@ try:
             )
             st.write("Missing features:", missing_features)
         else:
-            lookup = lakes.set_index("lake_id")[["name", "basin"]] if "lake_id" in lakes.columns else pd.DataFrame()
-       
+            # Added: map lake IDs to readable lake names and basins
+            lookup = (
+                lakes.set_index("lake_id")[["name", "basin"]]
+                if {"lake_id", "name", "basin"}.issubset(lakes.columns)
+                else pd.DataFrame()
+            )
+
             def lake_label(i):
                 lid = features_df.loc[i].get("lake_id", f"Lake {i}")
-                if lid in lookup.index:
+
+                if not lookup.empty and lid in lookup.index:
                     row = lookup.loc[lid]
-                    return f"{row.get('name', lid)} ({row.get('basin', '')})"
+                    return f"{row['name']} ({row['basin']})"
+
                 return str(lid)
 
             lake_options = features_df.index.tolist()
@@ -230,4 +238,3 @@ except Exception as e:
         "Check that the model's scikit-learn version is compatible "
         "with the version installed by the app."
     )
-
