@@ -192,8 +192,7 @@ try:
             )
             st.write("Missing features:", missing_features)
         else:
-            # Map lake IDs to readable lake names and locations.
-            # Use basin/sub-basin from feature_table.csv when no name matches.
+            # Map lake IDs to names and locations without displaying raw IDs.
             lookup = (
                 lakes.drop_duplicates("lake_id").set_index("lake_id")
                 if {"lake_id", "name", "basin"}.issubset(lakes.columns)
@@ -204,6 +203,7 @@ try:
                 row = features_df.loc[i]
                 lid = row.get("lake_id")
 
+                # Prefer the actual lake name and basin where available.
                 if not lookup.empty and lid in lookup.index:
                     lake = lookup.loc[lid]
                     name = str(lake.get("name", "")).strip()
@@ -214,6 +214,7 @@ try:
                             return f"{name} ({basin})"
                         return name
 
+                # Fall back to basin and sub-basin from the feature table.
                 basin = str(row.get("Basin", "")).strip()
                 sub_basin = str(row.get("Sub_basin", "")).strip()
 
@@ -223,9 +224,11 @@ try:
                 ]
 
                 if location:
-                    return " - ".join(dict.fromkeys(location))
+                    location_text = " - ".join(dict.fromkeys(location))
+                    return f"Lake {i + 1} — {location_text}"
 
-                return f"Lake entry {i + 1} (location unavailable)"
+                # Never expose the raw lake ID in the dropdown.
+                return f"Lake {i + 1} — Location unavailable"
 
             lake_options = features_df.index.tolist()
 
