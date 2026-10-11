@@ -1,3 +1,4 @@
+
 import joblib
 import json
 from pathlib import Path
@@ -191,21 +192,40 @@ try:
             )
             st.write("Missing features:", missing_features)
         else:
-            # Added: map lake IDs to readable lake names and basins
+            # Map lake IDs to readable lake names and locations.
+            # Use basin/sub-basin from feature_table.csv when no name matches.
             lookup = (
-                lakes.set_index("lake_id")[["name", "basin"]]
+                lakes.drop_duplicates("lake_id").set_index("lake_id")
                 if {"lake_id", "name", "basin"}.issubset(lakes.columns)
                 else pd.DataFrame()
             )
 
             def lake_label(i):
-                lid = features_df.loc[i].get("lake_id", f"Lake {i}")
+                row = features_df.loc[i]
+                lid = row.get("lake_id")
 
                 if not lookup.empty and lid in lookup.index:
-                    row = lookup.loc[lid]
-                    return f"{row['name']} ({row['basin']})"
+                    lake = lookup.loc[lid]
+                    name = str(lake.get("name", "")).strip()
+                    basin = str(lake.get("basin", "")).strip()
 
-                return str(lid)
+                    if name and name.lower() != "nan":
+                        if basin and basin.lower() != "nan":
+                            return f"{name} ({basin})"
+                        return name
+
+                basin = str(row.get("Basin", "")).strip()
+                sub_basin = str(row.get("Sub_basin", "")).strip()
+
+                location = [
+                    value for value in (basin, sub_basin)
+                    if value and value.lower() != "nan"
+                ]
+
+                if location:
+                    return " - ".join(dict.fromkeys(location))
+
+                return f"Lake entry {i + 1} (location unavailable)"
 
             lake_options = features_df.index.tolist()
 
