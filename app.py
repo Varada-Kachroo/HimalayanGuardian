@@ -145,6 +145,20 @@ if all_models:
 
     st.dataframe(comparison, use_container_width=True)
 
+st.subheader("Performance Analysis")
+
+roc_img = DATA / "roc_curves.png"
+cm_img = DATA / "confusion_matrices.png"
+
+if roc_img.exists():
+    st.image(str(roc_img), caption="ROC curves, grouped 5-fold CV (training lakes)")
+else:
+    st.info("ROC curve image not available.")
+
+if cm_img.exists():
+    st.image(str(cm_img), caption="Confusion matrices at 0.5 threshold, grouped 5-fold CV")
+else:
+    st.info("Confusion matrix image not available.")
 st.caption(
     "Evaluation metrics are based on spatial cross-validation. "
     "They do not represent calibrated probabilities of an actual flood."
