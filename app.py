@@ -1,3 +1,4 @@
+
 import joblib
 import json
 from pathlib import Path
@@ -59,18 +60,22 @@ else:
 if {"lat", "lon"}.issubset(shown.columns):
     points = shown.dropna(subset=["lat", "lon"])
     if not points.empty:
-        fig = px.scatter_geo(
+        fig = px.scatter_map(
             points,
             lat="lat",
             lon="lon",
             color="risk_level" if "risk_level" in points.columns else None,
             hover_name="name" if "name" in points.columns else None,
-            scope="asia",
+            zoom=8,
+            center={"lat": 27.8, "lon": 88.5},
             title="Glacial Lake Locations"
         )
+        fig.update_layout(map_style="open-street-map")
         st.plotly_chart(fig, use_container_width=True)
 
-st.dataframe(shown, use_container_width=True)
+display_cols = [c for c in ["name", "basin", "sub_basin", "area_km2", "altitude_m",
+                             "lake_type", "risk_level", "risk_score"] if c in shown.columns]
+st.dataframe(shown[display_cols], use_container_width=True)
 
 if "risk_level" in lakes.columns:
     counts = lakes["risk_level"].value_counts().rename_axis("Risk Level").reset_index(name="Lake Count")
@@ -187,14 +192,50 @@ try:
             )
             st.write("Missing features:", missing_features)
         else:
+            # Map lake IDs to names and locations without displaying raw IDs.
+            lookup = (
+                lakes.drop_duplicates("lake_id").set_index("lake_id")
+                if {"lake_id", "name", "basin"}.issubset(lakes.columns)
+                else pd.DataFrame()
+            )
+
+            def lake_label(i):
+                row = features_df.loc[i]
+                lid = row.get("lake_id")
+
+                # Prefer the actual lake name and basin where available.
+                if not lookup.empty and lid in lookup.index:
+                    lake = lookup.loc[lid]
+                    name = str(lake.get("name", "")).strip()
+                    basin = str(lake.get("basin", "")).strip()
+
+                    if name and name.lower() != "nan":
+                        if basin and basin.lower() != "nan":
+                            return f"{name} ({basin})"
+                        return name
+
+                # Fall back to basin and sub-basin from the feature table.
+                basin = str(row.get("Basin", "")).strip()
+                sub_basin = str(row.get("Sub_basin", "")).strip()
+
+                location = [
+                    value for value in (basin, sub_basin)
+                    if value and value.lower() != "nan"
+                ]
+
+                if location:
+                    location_text = " - ".join(dict.fromkeys(location))
+                    return f"Lake {i + 1} — {location_text}"
+
+                # Never expose the raw lake ID in the dropdown.
+                return f"Lake {i + 1} — Location unavailable"
+
             lake_options = features_df.index.tolist()
 
             selected_index = st.selectbox(
                 "Choose a lake for prediction",
                 lake_options,
-                format_func=lambda i: str(
-                    features_df.loc[i].get("lake_id", f"Lake {i}")
-                )
+                format_func=lake_label
             )
 
             if st.button("Predict Lake Risk"):
@@ -219,4 +260,3 @@ except Exception as e:
         "Check that the model's scikit-learn version is compatible "
         "with the version installed by the app."
     )
-
