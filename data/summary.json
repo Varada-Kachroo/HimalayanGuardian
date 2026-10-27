@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-09T07:23:49.847255+00:00",
+  "generated_at": "2026-10-27T09:27:06.078508+00:00",
   "demo": false,
   "model": {
     "name": "random_forest",
@@ -22,8 +22,32 @@
         "cv_recall": 0.697,
         "cv_precision": 0.593
       },
+      "extra_trees": {
+        "cv_roc_auc": 0.907,
+        "cv_pr_auc": 0.75,
+        "cv_recall": 0.866,
+        "cv_precision": 0.586
+      },
+      "svm": {
+        "cv_roc_auc": 0.879,
+        "cv_pr_auc": 0.67,
+        "cv_recall": 0.775,
+        "cv_precision": 0.595
+      },
       "automl_flaml": {
         "cv_roc_auc": 0.923
+      },
+      "ensemble_soft_voting": {
+        "cv_roc_auc": 0.909,
+        "cv_pr_auc": 0.738,
+        "cv_recall": 0.754,
+        "cv_precision": 0.618
+      },
+      "optimized_random_forest": {
+        "cv_roc_auc": 0.91,
+        "cv_pr_auc": 0.739,
+        "cv_recall": 0.838,
+        "cv_precision": 0.595
       }
     },
     "features": [
